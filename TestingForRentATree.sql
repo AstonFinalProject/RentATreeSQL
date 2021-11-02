@@ -4,6 +4,7 @@ call createNewUser('Test','Test@Test.com', 'Test', 'Test', '01478523691', 'Test'
 call createNewUser('Test', 'Test3@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Duplicate username error
 call createNewUser('Test4', 'Test@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Duplicate email error
 call createNewUser('Test6', 'Test6@Test.com', 'Test', 'Test', '0125644', 'Test', @uID); -- Phone number validation error
+select * from UserDetailsMaster;
 
 # login stored procedure testing
 set @resultCheck = -1;
