@@ -17,8 +17,6 @@ create table if not exists UserDetailsMaster(
     constraint ck_phonenovalidation check (TelephoneNo rlike '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]') -- Telephone number validation
 );
 
--- constraint ck_postcodevalidation check (Postcode rlike '[A-Z][A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][A-Z][0-9][0-9][A-Z][A-Z]'), -- Postcode validation
-
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
     UserID int not null, -- Foreign key from UserDetailsMaster
@@ -49,7 +47,7 @@ create table if not exists ProductDescription(
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
-    constraint ck_positiveprice check (Price >= 0) -- Constraint to check that price is greate than or equal to 0
+    constraint ck_positiveprice check (Price >= 0) -- Constraint to check that price is greater than or equal to 0
 );
 
 create table if not exists ProductTransactionTable(
