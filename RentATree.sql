@@ -63,6 +63,22 @@ create table if not exists ProductTransactionTable(
     constraint ck_endAfterStart check (LeaseEnd > LeaseStart) -- Constraint to check LeaseEnd is after LeaseStart
 );
 
+create table if not exists DeliveryAddressTable(
+	DeliveryAddressID int primary key auto_increment, -- Primary key
+    HouseNameOrNumber varchar(30) not null, 
+    StreetName varchar(30) not null,
+    City varchar(30) not null,
+    Postcode varchar(7),
+    constraint ck_postcodevalidation check (Postcode rlike '[A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][A-Z][0-9][0-9][0-9][A-Z][A-Z]')
+);
+
+create table if not exists DeliveryTransactionJunction(
+	FinalTransactionID int not null, -- Foreign key from UserTransactionTable
+    DeliveryAddressID int not null, -- Foreign key from DeliveryAddressTable
+    constraint fk_deliveryFinalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key reference and on delete cascade
+    constraint fk_deliveryAddressID foreign key (DeliveryAddressID) references DeliveryAddressTable (DeliveryAddressID) on delete cascade -- Sets up foreign key reference and on delete cascade
+);
+
 delimiter /
 create procedure createNewUser(
 	in p_Username varchar(30),
@@ -115,6 +131,26 @@ create procedure productTransaction(
 )
 begin
 	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_inalTransactionID,p_LeaseStart,p_LeaseEnd);
+end;
+/
+
+create procedure newDeliveryAddress(
+	in p_HouseNameOrNumber varchar(30),
+    in p_StreetName varchar(30),
+    in p_City varchar(30),
+    in p_Postcode varchar(7)
+)
+begin 
+	insert into DeliveryAddressTable(HouseNameOrNumber, StreetName, City, Postcode) values (p_HouseNameOrNumber, p_StreetName, p_City, p_Postcode);
+end;
+/
+
+create procedure insertTransactionJunction(
+	in p_FinalTransactionID int,
+    in p_DeliveryAddressID int
+)
+begin
+	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
 end;
 /
 
