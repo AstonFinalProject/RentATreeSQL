@@ -154,6 +154,36 @@ begin
 end;
 /
 
+create procedure newTreeDescriptionMaster(
+	in p_TreeDescription varchar(50),
+    in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_Stock int
+)
+begin 
+	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
+end;
+/
+
+create procedure insertNewProduct(
+	in p_TreeID int,
+    in p_SupplierID int,
+    in p_Height double,
+    in p_Price int
+)
+begin
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
+end;
+/
+
+create procedure insertNewSupplier(
+	in p_SupplierName varchar(30)
+)
+begin
+	insert into TreeSupplierMaster(SupplierName) values (p_SupplierName);
+end;
+/
+
 create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster

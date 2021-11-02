@@ -25,3 +25,22 @@ call createNewUser('Test2', 'Test2@Test.com', 'Test', 'Test', '98745632107', 'Te
 call userTransaction('Test2', 450); -- Should add
 call userTransaction('Test', 70); -- Should add
 select * from UserTransactionTable;
+
+# newTreeDescriptionMaster procedure testing
+call newTreeDescriptionMaster('Test', 'Test', 'Test', 10); -- Should add
+call newTreeDescriptionMaster('Test2', 'Test2', 'Test2', 5); -- Should add
+select * from TreeDescriptionMaster;
+
+# insertNewSupplier procedure testing
+call insertNewSupplier('TestSupplier'); -- Should add
+call insertNewSupplier('TestSupplier2'); -- Should add
+select * from TreeSupplierMaster;
+
+# insertNewProduct procedure testing
+call insertNewProduct(1, 1, 3.2, 30); -- Should add
+call insertNewProduct(1, 1, 4.5, 35); -- Should add
+call insertNewProduct(2, 1, 2.5, 50); -- Should add
+call insertNewProduct(2, 2, 3.1, 60); -- Should add
+call insertNewProduct(10, 1, 4.2, 30); -- Should throw error as TreeID doesn't exist
+call insertNewProduct(1, 5, 3.1, 45); -- Should throw error as SupplierID doesn't exist
+select * from ProductDescription;
