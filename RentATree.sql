@@ -184,11 +184,12 @@ begin
 end;
 /
 
+#Trigger to adjust stock after transaction
 create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster
-			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 
-				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription 
+			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 -- Adjust the stock by minus one
+				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription -- Of the corresponding tree type of the product that was sold
 					where ProductID.ProductDescription = new.ProductID);
 /
 delimiter ;
