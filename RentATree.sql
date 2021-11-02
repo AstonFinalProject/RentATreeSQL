@@ -23,7 +23,7 @@ create table if not exists UserDetailsMaster(
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
     UserID int not null, -- Foreign key from UserDetailsMaster
-    TotalSum int default 0, 
+    TotalSum int, 
     constraint fk_userID foreign key (UserID) references UserDetailsMaster (UserID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positivetotalsum check (TotalSum >= 0) -- Constraint to check total sum is greater than or equal to 0
 );
@@ -96,5 +96,35 @@ begin
 		set p_Result = 0; -- Otherwise, set result to 0
 	end if;
 end;
+/
+
+create procedure userTransaction(
+	in p_Username varchar(30),
+    in p_TotalSum int
+)
+begin
+	declare UserID_Transaction int; -- Declare local variable
+    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username
+    insert into UserTransactionTable(UserID,TotalSum) values (UserID_Transaction, p_TotalSum); -- Insert values into the transaction table
+end;
+/
+
+create procedure productTransaction(
+	in p_ProductID int,
+    in p_FinalTransactionID int,
+    in p_LeaseStart date,
+    in p_LeaseEnd date
+)
+begin
+	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_inalTransactionID,p_LeaseStart,p_LeaseEnd);
+end;
+/
+
+create trigger adjustStock after insert on ProductTransactionTable
+	for each row
+		update TreeDescriptionMaster
+			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 
+				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription 
+					where ProductID.ProductDescription = new.ProductID);
 /
 delimiter ;
