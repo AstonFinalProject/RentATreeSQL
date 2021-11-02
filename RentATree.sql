@@ -8,17 +8,16 @@ create table if not exists UserDetailsMaster(
     Email varchar(80) not null, 
     FName varchar(30) not null,
     LName varchar(30) not null,
-    HouseNameOrNumber varchar(30) not null,
-    StreetName varchar(30) not null,
-    Postcode varchar(7) not null, 
     TelephoneNo char(11) not null, 
     Password varchar(30) not null,
     constraint uq_username unique(Username), -- Unique username
-    constraint uq_email unique(Email), -- Unique email address
+    constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
-    constraint ck_postcodevalidation check (Postcode rlike '[A-Z][A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][A-Z][0-9][0-9][A-Z][A-Z]'), -- Postcode validation
+   
     constraint ck_phonenovalidation check (TelephoneNo rlike '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]') -- Telephone number validation
 );
+
+-- constraint ck_postcodevalidation check (Postcode rlike '[A-Z][A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][A-Z][0-9][0-9][A-Z][A-Z]'), -- Postcode validation
 
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
@@ -70,15 +69,14 @@ create procedure createNewUser(
     in p_Email varchar(80),
     in p_FName varchar(30),
     in p_LName varchar(30),
-    in p_HouseNameOrNumber varchar(30),
-    in p_StreetName varchar(30),
-    in p_Postcode varchar(7),
     in p_TelephoneNo char(11),
-    in p_Password varchar(30)
+    in p_Password varchar(30),
+    out p_userID int
 )
 begin
-	insert into UserDetailsMaster(Username,Email,FName,LName,HouseNameOrNumber,StreetName,Postcode,TelephoneNo,Password) 
-		values (p_Username,p_Email,p_FName,p_LName,p_HouseNameOrNumber,p_StreetName,p_Postcode,p_TelephoneNo,p_Password);
+	insert into UserDetailsMaster(Username,Email,FName,LName,TelephoneNo,Password) 
+		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,p_Password);
+	SET p_userid = (SELECT MAX(UserID) FROM UserDetailsMaster);
 end;
 /
 
