@@ -108,7 +108,9 @@ begin
     declare encrypted_Password_Attempt varchar(300); -- Delcare local variable
     set Password_Login = (select (UserDetailsMaster.Password) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set it equal to the password of corresponding username
     set encrypted_Password_Attempt = SHA1(p_Password); -- Checks if whatever password is attempted to log in is equal to the one stored
-    if Password_Login = encrypted_Password_Attempt then 
+    if Password_Login = encrypted_Password_Attempt AND isAdmin = TRUE then 
+		set p_result = 2;
+    elseif Password_Login = encrypted_Password_Attempt then 
 		set p_Result = 1; -- If the password is correct then set result to 1
 	else 
 		set p_Result = 0; -- Otherwise, set result to 0
