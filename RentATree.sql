@@ -13,7 +13,6 @@ create table if not exists UserDetailsMaster(
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
-   
     constraint ck_phonenovalidation check (TelephoneNo rlike '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]') -- Telephone number validation
 );
 
@@ -27,7 +26,7 @@ create table if not exists UserTransactionTable(
 
 create table if not exists TreeDescriptionMaster(
 	TreeID int primary key auto_increment, -- Primary key
-    TreeDescription varchar(50) not null,
+    TreeDescription varchar(100) not null,
     TreeType varchar(20) not null,
     TreeMaterial varchar(20) not null,
     Stock int not null default 0
@@ -153,7 +152,7 @@ end;
 /
 
 create procedure newTreeDescriptionMaster(
-	in p_TreeDescription varchar(50),
+	in p_TreeDescription varchar(100),
     in p_TreeType varchar(20),
     in p_TreeMaterial varchar(20),
     in p_Stock int
@@ -191,3 +190,38 @@ create trigger adjustStock after insert on ProductTransactionTable
 					where ProductID.ProductDescription = new.ProductID);
 /
 delimiter ;
+
+set @uID = -1;
+call createNewUser('TestUsername', 'Test@Email.com', 'TestFName', 'TestLName', '99999999999', 'TestPassword', @uID);
+call createNewUser('JY553', 'Jay01young@gmail.com', 'Jamie', 'Young', '07599268888', 'Pa$$word123', @uID);
+call createNewUser('AChenna', 'AChenna@icloud.com', 'Aasrith', 'Chenna', '01296455788', 'DUMMY', @uID);
+call createNewUser('Harison987', 'WrightHarison1@sky.com', 'Harison', 'Wright', '07526458792', 'NotAPassword', @uID);
+call createNewUser('JKaur', 'ItsJasleen@btinternet.com', 'Jasleen', 'Kaur', '01456554238', 'DummyPassword!', @uID);
+
+call insertNewSupplier('GoGoTrees');
+call insertNewSupplier('TreesRUs');
+call insertNewSupplier('SuperTrees');
+
+call newTreeDescriptionMaster('Wonderful artificial PVC Fir tree with beautiful leaves.', 'Fir', 'PVC', 4);
+call newTreeDescriptionMaster('Natural Pine tree to bring life to the house for Christmas.', 'Pine', 'Natural', 2);
+call newTreeDescriptionMaster('Artifical PE Spruce tree with woody scent to celebrate Christmas.', 'Spruce', 'PE', 5);
+call newTreeDescriptionMaster('PVC Cedar Tree with life-like leaves and branches.', 'Cedar', 'PVC', 3);
+call newTreeDescriptionMaster('Natural Fir tree, the perfect centre point for festivity.', 'Fir', 'Natural', 3);
+
+call insertNewProduct(1, 1, 152.3, 30);
+call insertNewProduct(1, 1, 165.7, 45);
+call insertNewProduct(1, 1, 122.2, 32);
+call insertNewProduct(1, 2, 150.5, 78);
+call insertNewProduct(2, 3, 195.0, 156);
+call insertNewProduct(2, 3, 210.0, 200);
+call insertNewProduct(3, 1, 130.5, 50);
+call insertNewProduct(3, 2, 89.0, 60);
+call insertNewProduct(3, 2, 99.9, 80);
+call insertNewProduct(3, 2, 105.0, 85);
+call insertNewProduct(3, 3, 132.0, 105);
+call insertNewProduct(4, 1, 123.4, 62);
+call insertNewProduct(4, 1, 143.0, 75);
+call insertNewProduct(4, 3, 162.6, 99);
+call insertNewProduct(5, 2, 187.2, 170);
+call insertNewProduct(5, 2, 199.9, 200);
+call insertNewProduct(5, 3, 220.0, 205);
