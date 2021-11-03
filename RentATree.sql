@@ -89,7 +89,7 @@ create procedure createNewUser(
 begin
 	insert into UserDetailsMaster(Username,Email,FName,LName,TelephoneNo,Password) 
 		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,p_Password);
-	SET p_userid = (SELECT MAX(UserID) FROM UserDetailsMaster);
+	SET p_userid =  LAST_INSERT_ID();
 end;
 /
 
