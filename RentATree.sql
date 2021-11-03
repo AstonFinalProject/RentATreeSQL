@@ -9,7 +9,7 @@ create table if not exists UserDetailsMaster(
     FName varchar(30) not null,
     LName varchar(30) not null,
     TelephoneNo char(11) not null, 
-    Password varchar(30) not null,
+    Password varchar(300) not null,
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
@@ -83,25 +83,29 @@ create procedure createNewUser(
     in p_FName varchar(30),
     in p_LName varchar(30),
     in p_TelephoneNo char(11),
-    in p_Password varchar(30),
+    in p_Password varchar(300),
     out p_userID int
 )
 begin
+	declare encrypted_Password varchar(300);
+    set encrypted_Password = SHA1(p_Password);
 	insert into UserDetailsMaster(Username,Email,FName,LName,TelephoneNo,Password) 
-		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,p_Password);
+		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,encrypted_Password);
 	SET p_userid = (SELECT MAX(UserID) FROM UserDetailsMaster);
 end;
 /
 
 create procedure login(
 	in p_Username varchar(30),
-    in p_Password varchar(30),
+    in p_Password varchar(300),
     out p_Result boolean -- Result boolean to return back to be used by Java
 )
 begin
-	declare Password_Login varchar(30); -- Declare local variable
+	declare Password_Login varchar(300); -- Declare local variable
+    declare encrypted_Password_Attempt varchar(300); -- Delcare local variable
     set Password_Login = (select (UserDetailsMaster.Password) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set it equal to the password of corresponding username
-	if Password_Login = p_Password then 
+    set encrypted_Password_Attempt = SHA1(p_Password);
+	if Password_Login = encrypted_Password_Attempt then 
 		set p_Result = 1; -- If the password is correct then set result to 1
 	else 
 		set p_Result = 0; -- Otherwise, set result to 0
