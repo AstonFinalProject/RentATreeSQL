@@ -90,13 +90,8 @@ begin
 	declare encrypted_Password varchar(300);
     set encrypted_Password = SHA1(p_Password); -- Encrpyt the password that is stored
 	insert into UserDetailsMaster(Username,Email,FName,LName,TelephoneNo,Password) 
-<<<<<<< HEAD
 		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,p_Password);
 	SET p_userid =  LAST_INSERT_ID();
-=======
-		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,encrypted_Password);
-	SET p_userid = (SELECT MAX(UserID) FROM UserDetailsMaster);
->>>>>>> 9f0cdfe7e1dbd2c6c5d40b72e6f98e74328409f7
 end;
 /
 
