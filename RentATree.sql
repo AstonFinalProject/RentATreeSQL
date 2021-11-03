@@ -10,6 +10,8 @@ create table if not exists UserDetailsMaster(
     LName varchar(30) not null,
     TelephoneNo char(11) not null, 
     Password varchar(300) not null,
+    Hit int not null default 0,
+    Miss int not null default 0,
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
@@ -76,6 +78,14 @@ create table if not exists DeliveryTransactionJunction(
     DeliveryAddressID int not null, -- Foreign key from DeliveryAddressTable
     constraint fk_deliveryFinalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key reference and on delete cascade
     constraint fk_deliveryAddressID foreign key (DeliveryAddressID) references DeliveryAddressTable (DeliveryAddressID) on delete cascade -- Sets up foreign key reference and on delete cascade
+);
+
+create table if not exists TreeStockTable(
+	TreeStockID int primary key auto_increment,
+    TreeID int not null,
+    TreeStockDate date not null,
+    Stock int,
+    constraint fk_treeIDForStock foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade
 );
 
 delimiter /
@@ -186,6 +196,16 @@ create procedure insertNewSupplier(
 )
 begin
 	insert into TreeSupplierMaster(SupplierName) values (p_SupplierName);
+end;
+/
+
+create procedure insertTreeStockTable(
+	in p_TreeID int,
+    in p_TreeStockDate date,
+    in p_Stock int
+)
+begin
+	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_TreeStock);
 end;
 /
 
