@@ -1,4 +1,5 @@
 # createNewUser stored procedure testing
+use rentatree;
 set @uID = -1;
 call createNewUser('Test','Test@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Should be added
 call createNewUser('Test', 'Test3@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Duplicate username error

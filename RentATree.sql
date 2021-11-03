@@ -114,12 +114,14 @@ end;
 
 create procedure userTransaction(
 	in p_Username varchar(30),
-    in p_TotalSum int
+    in p_TotalSum int,
+    out p_finalTransactionID int
 )
 begin
 	declare UserID_Transaction int; -- Declare local variable
     set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username
     insert into UserTransactionTable(UserID,TotalSum) values (UserID_Transaction, p_TotalSum); -- Insert values into the transaction table
+    SET  p_finalTransactionID = (SELECT last_insert_id());
 end;
 /
 
@@ -192,3 +194,11 @@ create trigger adjustStock after insert on ProductTransactionTable
 					where ProductID.ProductDescription = new.ProductID);
 /
 delimiter ;
+
+INSERT INTO treedescriptionmaster (TreeDescription, TreeType, TreeMaterial, Stock) VALUES ("this is a tree", "oak", "pvc", 100);
+INSERT INTO treesuppliermaster (suppliername) VALUES ("xyz supplier");
+INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1000,10);
+INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1001,10);
+INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1001,15);
+INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1002,10);
+INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1004,10);
