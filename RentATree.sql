@@ -9,15 +9,12 @@ create table if not exists UserDetailsMaster(
     FName varchar(30) not null,
     LName varchar(30) not null,
     TelephoneNo char(11) not null, 
-    Password varchar(30) not null,
+    Password varchar(300) not null,
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
-   
     constraint ck_phonenovalidation check (TelephoneNo rlike '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]') -- Telephone number validation
 );
-
--- constraint ck_postcodevalidation check (Postcode rlike '[A-Z][A-Z][0-9][0-9][0-9][A-Z][A-Z]' or Postcode rlike '[A-Z][A-Z][0-9][0-9][A-Z][A-Z]'), -- Postcode validation
 
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
@@ -29,7 +26,7 @@ create table if not exists UserTransactionTable(
 
 create table if not exists TreeDescriptionMaster(
 	TreeID int primary key auto_increment, -- Primary key
-    TreeDescription varchar(50) not null,
+    TreeDescription varchar(100) not null,
     TreeType varchar(20) not null,
     TreeMaterial varchar(20) not null,
     Stock int not null default 0
@@ -49,7 +46,7 @@ create table if not exists ProductDescription(
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
-    constraint ck_positiveprice check (Price >= 0) -- Constraint to check that price is greate than or equal to 0
+    constraint ck_positiveprice check (Price >= 0) -- Constraint to check that price is greater than or equal to 0
 );
 
 create table if not exists ProductTransactionTable(
@@ -86,25 +83,29 @@ create procedure createNewUser(
     in p_FName varchar(30),
     in p_LName varchar(30),
     in p_TelephoneNo char(11),
-    in p_Password varchar(30),
+    in p_Password varchar(300),
     out p_userID int
 )
 begin
+	declare encrypted_Password varchar(300);
+    set encrypted_Password = SHA1(p_Password); -- Encrpyt the password that is stored
 	insert into UserDetailsMaster(Username,Email,FName,LName,TelephoneNo,Password) 
-		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,p_Password);
+		values (p_Username,p_Email,p_FName,p_LName,p_TelephoneNo,encrypted_Password);
 	SET p_userid = (SELECT MAX(UserID) FROM UserDetailsMaster);
 end;
 /
 
 create procedure login(
 	in p_Username varchar(30),
-    in p_Password varchar(30),
+    in p_Password varchar(300),
     out p_Result boolean -- Result boolean to return back to be used by Java
 )
 begin
-	declare Password_Login varchar(30); -- Declare local variable
+	declare Password_Login varchar(300); -- Declare local variable
+    declare encrypted_Password_Attempt varchar(300); -- Delcare local variable
     set Password_Login = (select (UserDetailsMaster.Password) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set it equal to the password of corresponding username
-	if Password_Login = p_Password then 
+    set encrypted_Password_Attempt = SHA1(p_Password); -- Checks if whatever password is attempted to log in is equal to the one stored
+	if Password_Login = encrypted_Password_Attempt then 
 		set p_Result = 1; -- If the password is correct then set result to 1
 	else 
 		set p_Result = 0; -- Otherwise, set result to 0
@@ -157,7 +158,7 @@ end;
 /
 
 create procedure newTreeDescriptionMaster(
-	in p_TreeDescription varchar(50),
+	in p_TreeDescription varchar(100),
     in p_TreeType varchar(20),
     in p_TreeMaterial varchar(20),
     in p_Stock int
@@ -186,19 +187,48 @@ begin
 end;
 /
 
+#Trigger to adjust stock after transaction
 create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster
-			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 
-				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription 
+			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 -- Adjust the stock by minus one
+				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription -- Of the corresponding tree type of the product that was sold
 					where ProductID.ProductDescription = new.ProductID);
 /
 delimiter ;
 
-INSERT INTO treedescriptionmaster (TreeDescription, TreeType, TreeMaterial, Stock) VALUES ("this is a tree", "oak", "pvc", 100);
-INSERT INTO treesuppliermaster (suppliername) VALUES ("xyz supplier");
-INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1000,10);
-INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1001,10);
-INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1001,15);
-INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1002,10);
-INSERT INTO productdescription (TreeID, SupplierID, Height, Price) VALUES (1,1,1004,10);
+# Default data storage
+set @uID = -1;
+call createNewUser('TestUsername', 'Test@Email.com', 'TestFName', 'TestLName', '99999999999', 'TestPassword', @uID);
+call createNewUser('JY553', 'Jay01young@gmail.com', 'Jamie', 'Young', '07599268888', 'Pa$$word123', @uID);
+call createNewUser('AChenna', 'AChenna@icloud.com', 'Aasrith', 'Chenna', '01296455788', 'DUMMY', @uID);
+call createNewUser('Harison987', 'WrightHarison1@sky.com', 'Harison', 'Wright', '07526458792', 'NotAPassword', @uID);
+call createNewUser('JKaur', 'ItsJasleen@btinternet.com', 'Jasleen', 'Kaur', '01456554238', 'DummyPassword!', @uID);
+
+call insertNewSupplier('GoGoTrees');
+call insertNewSupplier('TreesRUs');
+call insertNewSupplier('SuperTrees');
+
+call newTreeDescriptionMaster('Wonderful artificial PVC Fir tree with beautiful leaves.', 'Fir', 'PVC', 4);
+call newTreeDescriptionMaster('Natural Pine tree to bring life to the house for Christmas.', 'Pine', 'Natural', 2);
+call newTreeDescriptionMaster('Artifical PE Spruce tree with woody scent to celebrate Christmas.', 'Spruce', 'PE', 5);
+call newTreeDescriptionMaster('PVC Cedar Tree with life-like leaves and branches.', 'Cedar', 'PVC', 3);
+call newTreeDescriptionMaster('Natural Fir tree, the perfect centre point for festivity.', 'Fir', 'Natural', 3);
+
+call insertNewProduct(1, 1, 152.3, 30);
+call insertNewProduct(1, 1, 165.7, 45);
+call insertNewProduct(1, 1, 122.2, 32);
+call insertNewProduct(1, 2, 150.5, 78);
+call insertNewProduct(2, 3, 195.0, 156);
+call insertNewProduct(2, 3, 210.0, 200);
+call insertNewProduct(3, 1, 130.5, 50);
+call insertNewProduct(3, 2, 89.0, 60);
+call insertNewProduct(3, 2, 99.9, 80);
+call insertNewProduct(3, 2, 105.0, 85);
+call insertNewProduct(3, 3, 132.0, 105);
+call insertNewProduct(4, 1, 123.4, 62);
+call insertNewProduct(4, 1, 143.0, 75);
+call insertNewProduct(4, 3, 162.6, 99);
+call insertNewProduct(5, 2, 187.2, 170);
+call insertNewProduct(5, 2, 199.9, 200);
+call insertNewProduct(5, 3, 220.0, 205);
