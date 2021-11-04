@@ -133,7 +133,7 @@ create procedure productTransaction(
     in p_LeaseEnd date
 )
 begin
-	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_inalTransactionID,p_LeaseStart,p_LeaseEnd);
+	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_FinalTransactionID,p_LeaseStart,p_LeaseEnd);
 end;
 /
 
@@ -141,10 +141,12 @@ create procedure newDeliveryAddress(
 	in p_HouseNameOrNumber varchar(30),
     in p_StreetName varchar(30),
     in p_City varchar(30),
-    in p_Postcode varchar(7)
+    in p_Postcode varchar(7),
+    out p_deliveryid int
 )
 begin 
 	insert into DeliveryAddressTable(HouseNameOrNumber, StreetName, City, Postcode) values (p_HouseNameOrNumber, p_StreetName, p_City, p_Postcode);
+    set p_deliveryid = (select last_insert_id());
 end;
 /
 
@@ -191,9 +193,9 @@ end;
 create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster
-			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 -- Adjust the stock by minus one
-				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription -- Of the corresponding tree type of the product that was sold
-					where ProductID.ProductDescription = new.ProductID);
+			set TreeDescriptionMaster.Stock = TreeDescriptionMaster.Stock - 1 -- Adjust the stock by minus one
+				where TreeID = ( select (ProductDescription.TreeID) from ProductDescription -- Of the corresponding tree type of the product that was sold
+					where ProductDescription.ProductID = new.ProductID);
 /
 delimiter ;
 
