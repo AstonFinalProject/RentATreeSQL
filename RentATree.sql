@@ -242,25 +242,68 @@ begin
 end;
 /
 
+
 create procedure insertTreeStockTable(
 	in p_TreeID int,
     in p_TreeStockDate date,
     in p_Stock int
 )
 begin
-	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_TreeStock);
+	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_Stock);
 end;
 /
 
-#Trigger to adjust stock after transaction
-create trigger adjustStock after insert on ProductTransactionTable
+create procedure setupTreeStock(IN startdate datetime, IN enddate datetime, IN treeid int)
+begin
+	declare stock int;
+    set stock = (select treedescriptionmaster.stock from treedescriptionmaster where treedescriptionmaster.treeid=treeid);
+	while(startdate<enddate) DO
+        call insertTreeStockTable(treeid, startdate, stock);
+		set startdate = (select date_add(startdate, interval 1 day));
+    end while;
+end;
+/
+
+create procedure setupTreeStockAllTrees(IN startdate datetime, IN enddate datetime)
+BEGIN 
+declare treeid_max int;
+declare init int;
+set init = 1;
+set treeid_max = (select max(treedescriptionmaster.treeid) from treedescriptionmaster);
+while(init<=treeid_max) do
+	call setupTreeStock(startdate, enddate, init);
+    set init = init+1;
+end while;
+END;
+/
+
+
+
+create trigger adjustStockTreeStockTable after insert 
+on ProductTransactionTable
+for each row
+begin
+	declare init_date datetime;
+    declare treeid_req int;
+    set treeid_req = (select productdescription.treeid from productdescription where productdescription.productid=new.productid);
+    set init_date = new.LeaseStart;
+    while (init_date<new.LeaseEnd) DO
+		update treestocktable set stock = stock - 1 where treestocktable.treeid = treeid_req and treestocktable.treestockdate = init_date;
+		set init_date = date_add(init_date, interval 1 day);
+    end while;
+end;
+/
+delimiter ;
+
+ #Trigger to adjust stock after transaction
+/* create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster
 			set TreeDescriptionMaster.Stock = TreeDescriptionMaster.Stock - 1 -- Adjust the stock by minus one
 				where TreeID = ( select (ProductDescription.TreeID) from ProductDescription -- Of the corresponding tree type of the product that was sold
 					where ProductDescription.ProductID = new.ProductID);
 /
-delimiter ;
+*/
 
 # Default data storage
 set @uID = -1;
@@ -300,4 +343,6 @@ call insertNewProduct(5, 2, 187.2, 170);
 call insertNewProduct(5, 2, 199.9, 200);
 call insertNewProduct(5, 3, 220.0, 205);
 
-
+call setupTreeStockAllTrees('2021-11-04', '2025-11-04');
+select count(*) from treestocktable;
+select stock from treedescriptionmaster where treeid = 1;
