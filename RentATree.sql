@@ -189,14 +189,6 @@ begin
 end;
 /
 
-create procedure addTree(
-	in p_ProductID INT
-)
-begin
-    DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
-end;
-/
-
 create procedure newTreeDescriptionMaster(
 	in p_TreeDescription varchar(100),
     in p_TreeType varchar(20),
