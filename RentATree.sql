@@ -10,6 +10,8 @@ create table if not exists UserDetailsMaster(
     LName varchar(30) not null,
     TelephoneNo char(11) not null, 
     Password varchar(300) not null,
+    Hit int not null default 0,
+    Miss int not null default 0,
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
@@ -20,6 +22,8 @@ create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
     UserID int not null, -- Foreign key from UserDetailsMaster
     TotalSum int, 
+    DeliverySlot char(2),
+    ReturnSlot char(2),
     constraint fk_userID foreign key (UserID) references UserDetailsMaster (UserID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positivetotalsum check (TotalSum >= 0) -- Constraint to check total sum is greater than or equal to 0
 );
@@ -76,6 +80,14 @@ create table if not exists DeliveryTransactionJunction(
     constraint fk_deliveryAddressID foreign key (DeliveryAddressID) references DeliveryAddressTable (DeliveryAddressID) on delete cascade -- Sets up foreign key reference and on delete cascade
 );
 
+create table if not exists TreeStockTable(
+	TreeStockID int primary key auto_increment,
+    TreeID int not null,
+    TreeStockDate date not null,
+    Stock int,
+    constraint fk_treeIDForStock foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade
+);
+
 delimiter /
 create procedure createNewUser(
 	in p_Username varchar(30),
@@ -117,11 +129,13 @@ create procedure userTransaction(
 	in p_Username varchar(30),
     in p_TotalSum int,
     out p_finalTransactionID int
+    in p_DeliverySlot char(2),
+    in p_ReturnSlot char(2)
 )
 begin
 	declare UserID_Transaction int; -- Declare local variable
-    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username
-    insert into UserTransactionTable(UserID,TotalSum) values (UserID_Transaction, p_TotalSum); -- Insert values into the transaction table
+    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username -- Insert values into the transaction table
+    insert into UserTransactionTable(UserID,TotalSum,DeliverySlot,ReturnSlot) values (UserID_Transaction, p_TotalSum, p_DeliverySlot, p_ReturnSlot); -- Insert values into the transaction table
     SET  p_finalTransactionID = (SELECT last_insert_id());
 end;
 /
@@ -186,6 +200,16 @@ create procedure insertNewSupplier(
 )
 begin
 	insert into TreeSupplierMaster(SupplierName) values (p_SupplierName);
+end;
+/
+
+create procedure insertTreeStockTable(
+	in p_TreeID int,
+    in p_TreeStockDate date,
+    in p_Stock int
+)
+begin
+	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_TreeStock);
 end;
 /
 
