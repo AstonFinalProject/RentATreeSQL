@@ -128,7 +128,7 @@ end;
 create procedure userTransaction(
 	in p_Username varchar(30),
     in p_TotalSum int,
-    out p_finalTransactionID int
+    out p_finalTransactionID int,
     in p_DeliverySlot char(2),
     in p_ReturnSlot char(2)
 )
@@ -258,3 +258,5 @@ call insertNewProduct(4, 3, 162.6, 99);
 call insertNewProduct(5, 2, 187.2, 170);
 call insertNewProduct(5, 2, 199.9, 200);
 call insertNewProduct(5, 3, 220.0, 205);
+
+
