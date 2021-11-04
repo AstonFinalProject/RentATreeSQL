@@ -182,15 +182,13 @@ end;
 
 
 create procedure insertNewProduct(
-	in p_TreeType varchar(20),
-    in p_SupplierName varchar(30),
+	in p_TreeID int,
+    in p_SupplierID int,
     in p_Height double,
     in p_Price DOUBLE
 )
 begin
-	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeType = p_TreeType);
-	SET @p_SupplierID = (SELECT SupplierID FROM TreeSupplierMaster WHERE TreeSupplierMaster.SupplierName = p_SupplierName);
-	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (@p_TreeID, @p_SupplierID, p_Height, p_Price);
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
 end;
 /
 create procedure deleteTree(
@@ -213,11 +211,10 @@ begin
 end;
 /
 create procedure deleteTreeType(
-	in p_TreeType varchar(20)
+	in p_TreeID INT
 )
 begin
-	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.Type = p_TreeType);
-    DELETE FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeID = @p_TreeID;
+    DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
 end;
 /
 
@@ -318,22 +315,22 @@ call newTreeDescriptionMaster('Artifical PE Spruce tree with woody scent to cele
 call newTreeDescriptionMaster('PVC Cedar Tree with life-like leaves and branches.', 'Cedar', 'PVC', 3);
 call newTreeDescriptionMaster('Natural Fir tree, the perfect centre point for festivity.', 'Fir', 'Natural', 3);
 
-call insertNewProduct(1, 'GoGoTrees', 152.3, 30);
-call insertNewProduct(1, 'GoGoTrees', 165.7, 45);
-call insertNewProduct(1, 'GoGoTrees', 122.2, 32);
-call insertNewProduct(1, 'TreesRUs', 150.5, 78);
-call insertNewProduct(2, 'SuperTrees', 195.0, 156);
-call insertNewProduct(2, 'SuperTrees', 210.0, 200);
-call insertNewProduct(3, 'GoGoTrees', 130.5, 50);
-call insertNewProduct(3, 'TreesRUs', 89.0, 60);
-call insertNewProduct(3, 'TreesRUs', 99.9, 80);
-call insertNewProduct(3, 'TreesRUs', 105.0, 85);
-call insertNewProduct(3, 'SuperTrees', 132.0, 105);
-call insertNewProduct(4, 'GoGoTrees', 123.4, 62);
-call insertNewProduct(4, 'GoGoTrees', 143.0, 75);
-call insertNewProduct(4, 'SuperTrees', 162.6, 99);
-call insertNewProduct(5, 'TreesRUs', 187.2, 170);
-call insertNewProduct(5, 'TreesRUs', 199.9, 200);
-call insertNewProduct(5, 'SuperTrees', 220.0, 205);
+call insertNewProduct(1, 1, 152.3, 30);
+call insertNewProduct(1, 1, 165.7, 45);
+call insertNewProduct(1, 1, 122.2, 32);
+call insertNewProduct(1, 2, 150.5, 78);
+call insertNewProduct(2, 3, 195.0, 156);
+call insertNewProduct(2, 3, 210.0, 200);
+call insertNewProduct(3, 1, 130.5, 50);
+call insertNewProduct(3, 2, 89.0, 60);
+call insertNewProduct(3, 2, 99.9, 80);
+call insertNewProduct(3, 2, 105.0, 85);
+call insertNewProduct(3, 3, 132.0, 105);
+call insertNewProduct(4, 1, 123.4, 62);
+call insertNewProduct(4, 1, 143.0, 75);
+call insertNewProduct(4, 3, 162.6, 99);
+call insertNewProduct(5, 2, 187.2, 170);
+call insertNewProduct(5, 2, 199.9, 200);
+call insertNewProduct(5, 3, 220.0, 205);
 
 
