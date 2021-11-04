@@ -11,6 +11,8 @@ create table if not exists UserDetailsMaster(
     TelephoneNo char(11) not null, 
     Password varchar(300) not null,
     isAdmin BOOL DEFAULT FALSE,
+    Hit int not null default 0,
+    Miss int not null default 0,
     constraint uq_username unique(Username), -- Unique username
     constraint uq_email unique(Email), -- Unique email addressuserdetailsmaster
     constraint ck_emailvalidation check (Email like '_%@_%.com'), -- Email validation
@@ -77,6 +79,14 @@ create table if not exists DeliveryTransactionJunction(
     DeliveryAddressID int not null, -- Foreign key from DeliveryAddressTable
     constraint fk_deliveryFinalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key reference and on delete cascade
     constraint fk_deliveryAddressID foreign key (DeliveryAddressID) references DeliveryAddressTable (DeliveryAddressID) on delete cascade -- Sets up foreign key reference and on delete cascade
+);
+
+create table if not exists TreeStockTable(
+	TreeStockID int primary key auto_increment,
+    TreeID int not null,
+    TreeStockDate date not null,
+    Stock int,
+    constraint fk_treeIDForStock foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade
 );
 
 delimiter /
@@ -157,13 +167,15 @@ end;
 create procedure userTransaction(
 	in p_Username varchar(30),
     in p_TotalSum int,
+    out p_finalTransactionID int,
     in p_DeliverySlot char(2),
     in p_ReturnSlot char(2)
 )
 begin
 	declare UserID_Transaction int; -- Declare local variable
-    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username
+    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username -- Insert values into the transaction table
     insert into UserTransactionTable(UserID,TotalSum,DeliverySlot,ReturnSlot) values (UserID_Transaction, p_TotalSum, p_DeliverySlot, p_ReturnSlot); -- Insert values into the transaction table
+    SET  p_finalTransactionID = (SELECT last_insert_id());
 end;
 /
 
@@ -174,7 +186,7 @@ create procedure productTransaction(
     in p_LeaseEnd date
 )
 begin
-	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_inalTransactionID,p_LeaseStart,p_LeaseEnd);
+	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_FinalTransactionID,p_LeaseStart,p_LeaseEnd);
 end;
 /
 
@@ -182,10 +194,12 @@ create procedure newDeliveryAddress(
 	in p_HouseNameOrNumber varchar(30),
     in p_StreetName varchar(30),
     in p_City varchar(30),
-    in p_Postcode varchar(7)
+    in p_Postcode varchar(7),
+    out p_deliveryid int
 )
 begin 
 	insert into DeliveryAddressTable(HouseNameOrNumber, StreetName, City, Postcode) values (p_HouseNameOrNumber, p_StreetName, p_City, p_Postcode);
+    set p_deliveryid = (select last_insert_id());
 end;
 /
 
@@ -228,13 +242,23 @@ begin
 end;
 /
 
+create procedure insertTreeStockTable(
+	in p_TreeID int,
+    in p_TreeStockDate date,
+    in p_Stock int
+)
+begin
+	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_TreeStock);
+end;
+/
+
 #Trigger to adjust stock after transaction
 create trigger adjustStock after insert on ProductTransactionTable
 	for each row
 		update TreeDescriptionMaster
-			set Stock.TreeDescriptionMaster = Stock.TreeDescriptionMaster - 1 -- Adjust the stock by minus one
-				where TreeID = ( select (TreeID.ProductDescription) from ProductDescription -- Of the corresponding tree type of the product that was sold
-					where ProductID.ProductDescription = new.ProductID);
+			set TreeDescriptionMaster.Stock = TreeDescriptionMaster.Stock - 1 -- Adjust the stock by minus one
+				where TreeID = ( select (ProductDescription.TreeID) from ProductDescription -- Of the corresponding tree type of the product that was sold
+					where ProductDescription.ProductID = new.ProductID);
 /
 delimiter ;
 
@@ -275,3 +299,5 @@ call insertNewProduct(4, 3, 162.6, 99);
 call insertNewProduct(5, 2, 187.2, 170);
 call insertNewProduct(5, 2, 199.9, 200);
 call insertNewProduct(5, 3, 220.0, 205);
+
+

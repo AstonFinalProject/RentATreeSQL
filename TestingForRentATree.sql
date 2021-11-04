@@ -1,4 +1,5 @@
 # createNewUser stored procedure testing
+use rentatree;
 set @uID = -1;
 call createNewUser('Test','Test@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Should be added
 call createNewUser('Test', 'Test3@Test.com', 'Test', 'Test', '01478523691', 'Test', @uID); -- Duplicate username error
@@ -19,11 +20,11 @@ call newDeliveryAddress('10', 'Test', 'Test', 'abny'); -- Shouldn't work
 call newDeliveryAddress('10', 'Test', 'Test', 'S12HH'); -- Should work
 
 # userTransaction stored procedure testing
-call userTransaction('Test', 30); -- Should add to table
+call userTransaction('Test', 30, 'am', 'pm'); -- Should add to table
 call userTransaction('NoTest', 50); -- Shouldn't add to table as username does not exist
 call createNewUser('Test2', 'Test2@Test.com', 'Test', 'Test', '98745632107', 'Test', @uID);
-call userTransaction('Test2', 450); -- Should add
-call userTransaction('Test', 70); -- Should add
+call userTransaction('Test2', 450, 'pm', 'pm'); -- Should add
+call userTransaction('Test', 70, 'am', 'am'); -- Should add
 select * from UserTransactionTable;
 
 # newTreeDescriptionMaster procedure testing
