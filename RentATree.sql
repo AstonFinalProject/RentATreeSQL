@@ -181,14 +181,17 @@ end;
 /
 
 
-create procedure insertNewProduct(
-	in p_TreeID int,
-    in p_SupplierID int,
+create procedure insertTree(
+	in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_SupplierName varchar(30),
     in p_Height double,
     in p_Price DOUBLE
 )
 begin
-	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeType = p_TreeType AND TreeDescriptionMaster.TreeMaterial = p_TreeMaterial);
+	SET @p_SupplierID = (SELECT SupplierID FROM TreeSupplierMaster WHERE TreeSupplierMaster.SupplierName = p_SupplierName);
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (@p_TreeID, @p_SupplierID, p_Height, p_Price);
 end;
 /
 create procedure deleteTree(
@@ -264,6 +267,17 @@ create procedure insertTransactionJunction(
 )
 begin
 	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
+end;
+/
+
+create procedure insertNewProduct(
+	in p_TreeID int,
+    in p_SupplierID int,
+    in p_Height double,
+    in p_Price DOUBLE
+)
+begin
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
 end;
 /
 
