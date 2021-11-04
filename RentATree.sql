@@ -47,7 +47,7 @@ create table if not exists ProductDescription(
     TreeID int not null, -- Foreign key from TreeDescriptionMaster
     SupplierID int not null, -- Foreign key from TreeSupplierMaster
     Height double not null, -- Height in centimeters as specified in the brief
-    Price DOUBLE not null, -- Price in pence right now as this is what was used in the sample code
+    Price int not null, -- Price in pence right now as this is what was used in the sample code
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
@@ -60,7 +60,7 @@ create table if not exists ProductTransactionTable(
     FinalTransactionID int not null, -- Foreign key from UserTransactionTable
     LeaseStart date not null,
     LeaseEnd date not null,
-    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID), -- Sets up foreign key
+    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_finalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_endAfterStart check (LeaseEnd > LeaseStart) -- Constraint to check LeaseEnd is after LeaseStart
 );
@@ -163,6 +163,121 @@ end;
 /
 
 
+
+create procedure userTransaction(
+	in p_Username varchar(30),
+    in p_TotalSum int,
+    out p_finalTransactionID int,
+    in p_DeliverySlot char(2),
+    in p_ReturnSlot char(2)
+)
+begin
+	declare UserID_Transaction int; -- Declare local variable
+    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username -- Insert values into the transaction table
+    insert into UserTransactionTable(UserID,TotalSum,DeliverySlot,ReturnSlot) values (UserID_Transaction, p_TotalSum, p_DeliverySlot, p_ReturnSlot); -- Insert values into the transaction table
+    SET  p_finalTransactionID = (SELECT last_insert_id());
+end;
+/
+
+create procedure productTransaction(
+	in p_ProductID int,
+    in p_FinalTransactionID int,
+    in p_LeaseStart date,
+    in p_LeaseEnd date
+)
+begin
+	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_FinalTransactionID,p_LeaseStart,p_LeaseEnd);
+end;
+/
+
+create procedure newDeliveryAddress(
+	in p_HouseNameOrNumber varchar(30),
+    in p_StreetName varchar(30),
+    in p_City varchar(30),
+    in p_Postcode varchar(7),
+    out p_deliveryid int
+)
+begin 
+	insert into DeliveryAddressTable(HouseNameOrNumber, StreetName, City, Postcode) values (p_HouseNameOrNumber, p_StreetName, p_City, p_Postcode);
+    set p_deliveryid = (select last_insert_id());
+end;
+/
+
+create procedure insertTransactionJunction(
+	in p_FinalTransactionID int,
+    in p_DeliveryAddressID int
+)
+begin
+	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
+end;
+/
+
+create procedure newTreeDescriptionMaster(
+	in p_TreeDescription varchar(100),
+    in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_Stock int
+)
+begin 
+	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
+end;
+/
+
+create procedure insertNewProduct(
+	in p_TreeID int,
+    in p_SupplierID int,
+    in p_Height double,
+    in p_Price int
+)
+begin
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
+end;
+/
+
+create procedure insertNewSupplier(
+	in p_SupplierName varchar(30)
+)
+begin
+	insert into TreeSupplierMaster(SupplierName) values (p_SupplierName);
+end;
+/
+
+
+create procedure insertTreeStockTable(
+	in p_TreeID int,
+    in p_TreeStockDate date,
+    in p_Stock int
+)
+begin
+	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_Stock);
+end;
+/
+
+create procedure setupTreeStock(IN startdate datetime, IN enddate datetime, IN treeid int)
+begin
+	declare stock int;
+    set stock = (select treedescriptionmaster.stock from treedescriptionmaster where treedescriptionmaster.treeid=treeid);
+	while(startdate<enddate) DO
+        call insertTreeStockTable(treeid, startdate, stock);
+		set startdate = (select date_add(startdate, interval 1 day));
+    end while;
+end;
+/
+
+create procedure setupTreeStockAllTrees(IN startdate datetime, IN enddate datetime)
+BEGIN 
+declare treeid_max int;
+declare init int;
+set init = 1;
+set treeid_max = (select max(treedescriptionmaster.treeid) from treedescriptionmaster);
+while(init<=treeid_max) do
+	call setupTreeStock(startdate, enddate, init);
+    set init = init+1;
+end while;
+END;
+/
+
+
 create procedure incrementHit(
 	in p_Username varchar(30)
 )
@@ -220,110 +335,6 @@ begin
     DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
 end;
 /
-
-
-create procedure userTransaction(
-	in p_Username varchar(30),
-    in p_TotalSum int,
-    out p_finalTransactionID int,
-    in p_DeliverySlot char(2),
-    in p_ReturnSlot char(2)
-)
-begin
-	declare UserID_Transaction int; -- Declare local variable
-    set UserID_Transaction = (select (UserDetailsMaster.UserID) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set ID equal to ID corresponding to username -- Insert values into the transaction table
-    insert into UserTransactionTable(UserID,TotalSum,DeliverySlot,ReturnSlot) values (UserID_Transaction, p_TotalSum, p_DeliverySlot, p_ReturnSlot); -- Insert values into the transaction table
-    SET  p_finalTransactionID = (SELECT last_insert_id());
-end;
-/
-
-create procedure productTransaction(
-	in p_ProductID int,
-    in p_FinalTransactionID int,
-    in p_LeaseStart date,
-    in p_LeaseEnd date
-)
-begin
-	insert into ProductTransactionTable(ProductID,FinalTransactionID,LeaseStart,LeaseEnd) values (p_ProductID,p_FinalTransactionID,p_LeaseStart,p_LeaseEnd);
-end;
-/
-
-create procedure newDeliveryAddress(
-	in p_HouseNameOrNumber varchar(30),
-    in p_StreetName varchar(30),
-    in p_City varchar(30),
-    in p_Postcode varchar(7),
-    out p_deliveryid int
-)
-begin 
-	insert into DeliveryAddressTable(HouseNameOrNumber, StreetName, City, Postcode) values (p_HouseNameOrNumber, p_StreetName, p_City, p_Postcode);
-    set p_deliveryid = (select last_insert_id());
-end;
-/
-
-create procedure insertTransactionJunction(
-	in p_FinalTransactionID int,
-    in p_DeliveryAddressID int
-)
-begin
-	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
-end;
-/
-
-create procedure insertNewProduct(
-	in p_TreeID int,
-    in p_SupplierID int,
-    in p_Height double,
-    in p_Price DOUBLE
-)
-begin
-	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
-end;
-/
-
-create procedure insertNewSupplier(
-	in p_SupplierName varchar(30)
-)
-begin
-	insert into TreeSupplierMaster(SupplierName) values (p_SupplierName);
-end;
-/
-
-
-create procedure insertTreeStockTable(
-	in p_TreeID int,
-    in p_TreeStockDate date,
-    in p_Stock int
-)
-begin
-	insert into TreeStockTable(TreeID, TreeStockDate, Stock) values (p_TreeID, p_TreeStockDate, p_Stock);
-end;
-/
-
-create procedure setupTreeStock(IN startdate datetime, IN enddate datetime, IN treeid int)
-begin
-	declare stock int;
-    set stock = (select treedescriptionmaster.stock from treedescriptionmaster where treedescriptionmaster.treeid=treeid);
-	while(startdate<enddate) DO
-        call insertTreeStockTable(treeid, startdate, stock);
-		set startdate = (select date_add(startdate, interval 1 day));
-    end while;
-end;
-/
-
-create procedure setupTreeStockAllTrees(IN startdate datetime, IN enddate datetime)
-BEGIN 
-declare treeid_max int;
-declare init int;
-set init = 1;
-set treeid_max = (select max(treedescriptionmaster.treeid) from treedescriptionmaster);
-while(init<=treeid_max) do
-	call setupTreeStock(startdate, enddate, init);
-    set init = init+1;
-end while;
-END;
-/
-
 
 
 create trigger adjustStockTreeStockTable after insert 
