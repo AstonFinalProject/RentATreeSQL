@@ -47,7 +47,7 @@ create table if not exists ProductDescription(
     TreeID int not null, -- Foreign key from TreeDescriptionMaster
     SupplierID int not null, -- Foreign key from TreeSupplierMaster
     Height double not null, -- Height in centimeters as specified in the brief
-    Price int not null, -- Price in pence right now as this is what was used in the sample code
+    Price DOUBLE not null, -- Price in pence right now as this is what was used in the sample code
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
@@ -60,7 +60,7 @@ create table if not exists ProductTransactionTable(
     FinalTransactionID int not null, -- Foreign key from UserTransactionTable
     LeaseStart date not null,
     LeaseEnd date not null,
-    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID) on delete cascade, -- Sets up foreign key and on delete cascade
+    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID), -- Sets up foreign key
     constraint fk_finalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_endAfterStart check (LeaseEnd > LeaseStart) -- Constraint to check LeaseEnd is after LeaseStart
 );
@@ -163,6 +163,64 @@ end;
 /
 
 
+create procedure incrementHit(
+	in p_Username varchar(30)
+)
+begin
+	SET @currentHit = (SELECT Hit FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+    UPDATE UserDetailsMaster SET Hit = (currentHit+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+create procedure incrementMiss(
+	in p_Username varchar(30)
+)
+begin
+	SET @currentMiss = (SELECT Miss FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+    UPDATE UserDetailsMaster SET Miss = (currentMiss+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+
+
+create procedure insertTree(
+	in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_SupplierName varchar(30),
+    in p_Height double,
+    in p_Price DOUBLE
+)
+begin
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeType = p_TreeType AND TreeDescriptionMaster.TreeMaterial = p_TreeMaterial);
+	SET @p_SupplierID = (SELECT SupplierID FROM TreeSupplierMaster WHERE TreeSupplierMaster.SupplierName = p_SupplierName);
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (@p_TreeID, @p_SupplierID, p_Height, p_Price);
+end;
+/
+create procedure deleteTree(
+	in p_ProductID INT
+)
+begin
+    DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
+end;
+/
+
+
+create procedure newTreeDescriptionMaster(
+	in p_TreeDescription varchar(100),
+    in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_Stock int
+)
+begin 
+	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
+end;
+/
+create procedure deleteTreeType(
+	in p_TreeID INT
+)
+begin
+    DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
+end;
+/
+
 
 create procedure userTransaction(
 	in p_Username varchar(30),
@@ -212,22 +270,11 @@ begin
 end;
 /
 
-create procedure newTreeDescriptionMaster(
-	in p_TreeDescription varchar(100),
-    in p_TreeType varchar(20),
-    in p_TreeMaterial varchar(20),
-    in p_Stock int
-)
-begin 
-	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
-end;
-/
-
 create procedure insertNewProduct(
 	in p_TreeID int,
     in p_SupplierID int,
     in p_Height double,
-    in p_Price int
+    in p_Price DOUBLE
 )
 begin
 	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
