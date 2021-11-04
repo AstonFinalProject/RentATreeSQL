@@ -182,13 +182,15 @@ end;
 
 
 create procedure insertNewProduct(
-	in p_TreeID int,
-    in p_SupplierID int,
+	in p_TreeType varchar(20),
+    in p_SupplierName varchar(30),
     in p_Height double,
     in p_Price DOUBLE
 )
 begin
-	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.Type = p_TreeType);
+	SET @p_SupplierID = (SELECT SupplierID FROM TreeSupplierMaster WHERE TreeSupplierMaster.SupplierName = p_SupplierName);
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, @p_SupplierID, p_Height, p_Price);
 end;
 /
 create procedure deleteTree(
@@ -211,10 +213,11 @@ begin
 end;
 /
 create procedure deleteTreeType(
-	in p_TreeID INT
+	in p_TreeType varchar(20)
 )
 begin
-    DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.Type = p_TreeType);
+    DELETE FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeID = @p_TreeID;
 end;
 /
 
