@@ -10,6 +10,7 @@ create table if not exists UserDetailsMaster(
     LName varchar(30) not null,
     TelephoneNo char(11) not null, 
     Password varchar(300) not null,
+    isAdmin BOOL DEFAULT FALSE,
     Hit int not null default 0,
     Miss int not null default 0,
     constraint uq_username unique(Username), -- Unique username
@@ -115,15 +116,53 @@ create procedure login(
 begin
 	declare Password_Login varchar(300); -- Declare local variable
     declare encrypted_Password_Attempt varchar(300); -- Delcare local variable
+	DECLARE isAdmin BOOL;
     set Password_Login = (select (UserDetailsMaster.Password) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set it equal to the password of corresponding username
     set encrypted_Password_Attempt = SHA1(p_Password); -- Checks if whatever password is attempted to log in is equal to the one stored
-	if Password_Login = encrypted_Password_Attempt then 
+    SET isAdmin = (SELECT (UserDetailsMaster.isAdmin) FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+  
+
+    if Password_Login = encrypted_Password_Attempt then 
+		IF isAdmin THEN
+			SET p_Result = 2;
+		ELSE
+			set p_Result = 1; -- If the password is correct then set result to 1
+		END IF;
+	else 
+		set p_Result = 0; -- Otherwise, set result to 0
+	end if;
+end;
+/
+
+create procedure setAdmin(
+	in p_Username varchar(30)
+)
+begin
+	UPDATE UserDetailsMaster SET isAdmin = true WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+
+create procedure adminLogin(
+	in p_Username varchar(30),
+    in p_Password varchar(300),
+    out p_Result boolean -- Result boolean to return back to be used by Java
+)
+begin
+	declare Password_Login varchar(300); -- Declare local variable
+    declare encrypted_Password_Attempt varchar(300); -- Delcare local variable
+	DECLARE isAdmin BOOL;
+    set Password_Login = (select (UserDetailsMaster.Password) from UserDetailsMaster where UserDetailsMaster.Username = p_Username); -- Set it equal to the password of corresponding username
+    set encrypted_Password_Attempt = SHA1(p_Password); -- Checks if whatever password is attempted to log in is equal to the one stored
+    SET isAdmin = (SELECT (UserDetailsMaster.isAdmin) FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+    if Password_Login = encrypted_Password_Attempt AND isAdmin = TRUE then 
 		set p_Result = 1; -- If the password is correct then set result to 1
 	else 
 		set p_Result = 0; -- Otherwise, set result to 0
 	end if;
 end;
 /
+
+
 
 create procedure userTransaction(
 	in p_Username varchar(30),
@@ -230,6 +269,8 @@ call createNewUser('JY553', 'Jay01young@gmail.com', 'Jamie', 'Young', '075992688
 call createNewUser('AChenna', 'AChenna@icloud.com', 'Aasrith', 'Chenna', '01296455788', 'DUMMY', @uID);
 call createNewUser('Harison987', 'WrightHarison1@sky.com', 'Harison', 'Wright', '07526458792', 'NotAPassword', @uID);
 call createNewUser('JKaur', 'ItsJasleen@btinternet.com', 'Jasleen', 'Kaur', '01456554238', 'DummyPassword!', @uID);
+
+CALL setAdmin('Harison987');
 
 call insertNewSupplier('GoGoTrees');
 call insertNewSupplier('TreesRUs');
