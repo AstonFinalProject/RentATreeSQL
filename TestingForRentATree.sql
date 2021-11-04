@@ -15,16 +15,18 @@ call login('Test', 'Test', @resultCheck); -- As the password matches, it should 
 select (concat('The result was ', @resultCheck)) as 'ThisValueShouldBe1';
 
 # newDeliveryAddress stored procedure testing
-call newDeliveryAddress('10', 'Test', 'Test', 'HP180ZP'); -- Should work
-call newDeliveryAddress('10', 'Test', 'Test', 'abny'); -- Shouldn't work
-call newDeliveryAddress('10', 'Test', 'Test', 'S12HH'); -- Should work
+set @dID = -1;
+call newDeliveryAddress('10', 'Test', 'Test', 'HP180ZP', @dID); -- Should work
+call newDeliveryAddress('10', 'Test', 'Test', 'abny', @dID); -- Shouldn't work
+call newDeliveryAddress('10', 'Test', 'Test', 'S12HH', @dID); -- Should work
 
 # userTransaction stored procedure testing
-call userTransaction('Test', 30, 'am', 'pm'); -- Should add to table
-call userTransaction('NoTest', 50); -- Shouldn't add to table as username does not exist
+set @ftID = -1;
+call userTransaction('Test', 30, @ftID, 'am', 'pm'); -- Should add to table
+call userTransaction('NoTest', 50, @ftID, 'am', 'pm'); -- Shouldn't add to table as username does not exist
 call createNewUser('Test2', 'Test2@Test.com', 'Test', 'Test', '98745632107', 'Test', @uID);
-call userTransaction('Test2', 450, 'pm', 'pm'); -- Should add
-call userTransaction('Test', 70, 'am', 'am'); -- Should add
+call userTransaction('Test2', 450, @ftID, 'pm', 'pm'); -- Should add
+call userTransaction('Test', 70, @ftID, 'am', 'am'); -- Should add
 select * from UserTransactionTable;
 
 # newTreeDescriptionMaster procedure testing
@@ -43,5 +45,5 @@ call insertNewProduct(1, 1, 4.5, 35); -- Should add
 call insertNewProduct(2, 1, 2.5, 50); -- Should add
 call insertNewProduct(2, 2, 3.1, 60); -- Should add
 call insertNewProduct(10, 1, 4.2, 30); -- Should throw error as TreeID doesn't exist
-call insertNewProduct(1, 5, 3.1, 45); -- Should throw error as SupplierID doesn't exist
+call insertNewProduct(1, 15, 3.1, 45); -- Should throw error as SupplierID doesn't exist
 select * from ProductDescription;
