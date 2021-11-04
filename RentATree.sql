@@ -47,7 +47,7 @@ create table if not exists ProductDescription(
     TreeID int not null, -- Foreign key from TreeDescriptionMaster
     SupplierID int not null, -- Foreign key from TreeSupplierMaster
     Height double not null, -- Height in centimeters as specified in the brief
-    Price int not null, -- Price in pence right now as this is what was used in the sample code
+    Price DOUBLE not null, -- Price in pence right now as this is what was used in the sample code
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
@@ -185,7 +185,7 @@ create procedure insertNewProduct(
 	in p_TreeID int,
     in p_SupplierID int,
     in p_Height double,
-    in p_Price int
+    in p_Price DOUBLE
 )
 begin
 	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
