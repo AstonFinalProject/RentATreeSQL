@@ -162,6 +162,7 @@ begin
 end;
 /
 
+
 create procedure incrementHit(
 	in p_Username varchar(30)
 )
@@ -170,8 +171,6 @@ begin
     UPDATE UserDetailsMaster SET Hit = (currentHit+1) WHERE UserDetailsMaster.Username = p_Username;
 end;
 /
-
-
 create procedure incrementMiss(
 	in p_Username varchar(30)
 )
@@ -181,6 +180,17 @@ begin
 end;
 /
 
+
+create procedure insertNewProduct(
+	in p_TreeID int,
+    in p_SupplierID int,
+    in p_Height double,
+    in p_Price int
+)
+begin
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
+end;
+/
 create procedure deleteTree(
 	in p_ProductID INT
 )
@@ -188,6 +198,7 @@ begin
     DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
 end;
 /
+
 
 create procedure newTreeDescriptionMaster(
 	in p_TreeDescription varchar(100),
@@ -199,7 +210,6 @@ begin
 	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
 end;
 /
-
 create procedure deleteTreeType(
 	in p_TreeID INT
 )
@@ -254,17 +264,6 @@ create procedure insertTransactionJunction(
 )
 begin
 	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
-end;
-/
-
-create procedure insertNewProduct(
-	in p_TreeID int,
-    in p_SupplierID int,
-    in p_Height double,
-    in p_Price int
-)
-begin
-	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
 end;
 /
 
