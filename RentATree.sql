@@ -60,7 +60,7 @@ create table if not exists ProductTransactionTable(
     FinalTransactionID int not null, -- Foreign key from UserTransactionTable
     LeaseStart date not null,
     LeaseEnd date not null,
-    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID) on delete cascade, -- Sets up foreign key and on delete cascade
+    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID), -- Sets up foreign key
     constraint fk_finalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_endAfterStart check (LeaseEnd > LeaseStart) -- Constraint to check LeaseEnd is after LeaseStart
 );
