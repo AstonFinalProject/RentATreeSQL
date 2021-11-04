@@ -162,6 +162,59 @@ begin
 end;
 /
 
+create procedure incrementHit(
+	in p_Username varchar(30)
+)
+begin
+	SET @currentHit = (SELECT Hit FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+    UPDATE UserDetailsMaster SET Hit = (currentHit+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+
+
+create procedure incrementMiss(
+	in p_Username varchar(30)
+)
+begin
+	SET @currentMiss = (SELECT Miss FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
+    UPDATE UserDetailsMaster SET Miss = (currentMiss+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+
+create procedure deleteTree(
+	in p_ProductID INT
+)
+begin
+    DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
+end;
+/
+
+create procedure addTree(
+	in p_ProductID INT
+)
+begin
+    DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
+end;
+/
+
+create procedure newTreeDescriptionMaster(
+	in p_TreeDescription varchar(100),
+    in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_Stock int
+)
+begin 
+	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
+end;
+/
+
+create procedure deleteTreeType(
+	in p_TreeID INT
+)
+begin
+    DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
+end;
+/
 
 
 create procedure userTransaction(
@@ -209,17 +262,6 @@ create procedure insertTransactionJunction(
 )
 begin
 	insert into DeliveryTransactionJunction(FinalTransactionID, DeliveryAddressID) values (p_FinalTransactionID, p_DeliveryAddressID);
-end;
-/
-
-create procedure newTreeDescriptionMaster(
-	in p_TreeDescription varchar(100),
-    in p_TreeType varchar(20),
-    in p_TreeMaterial varchar(20),
-    in p_Stock int
-)
-begin 
-	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
 end;
 /
 
