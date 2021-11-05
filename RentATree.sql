@@ -22,7 +22,7 @@ create table if not exists UserDetailsMaster(
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
     UserID int not null, -- Foreign key from UserDetailsMaster
-    TotalSum int, 
+    TotalSum double, 
     DeliverySlot char(2),
     ReturnSlot char(2),
     constraint fk_userID foreign key (UserID) references UserDetailsMaster (UserID) on delete cascade, -- Sets up foreign key and on delete cascade
@@ -166,7 +166,7 @@ end;
 
 create procedure userTransaction(
 	in p_Username varchar(30),
-    in p_TotalSum int,
+    in p_TotalSum double,
     out p_finalTransactionID int,
     in p_DeliverySlot char(2),
     in p_ReturnSlot char(2)
@@ -282,16 +282,14 @@ create procedure incrementHit(
 	in p_Username varchar(30)
 )
 begin
-	SET @currentHit = (SELECT Hit FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
-    UPDATE UserDetailsMaster SET Hit = (currentHit+1) WHERE UserDetailsMaster.Username = p_Username;
+    UPDATE UserDetailsMaster SET Hit = (Hit+1) WHERE UserDetailsMaster.Username = p_Username;
 end;
 /
 create procedure incrementMiss(
 	in p_Username varchar(30)
 )
 begin
-	SET @currentMiss = (SELECT Miss FROM UserDetailsMaster WHERE UserDetailsMaster.Username = p_Username);
-    UPDATE UserDetailsMaster SET Miss = (currentMiss+1) WHERE UserDetailsMaster.Username = p_Username;
+    UPDATE UserDetailsMaster SET Miss = (Miss+1) WHERE UserDetailsMaster.Username = p_Username;
 end;
 /
 
@@ -318,23 +316,15 @@ end;
 /
 
 
-create procedure newTreeDescriptionMaster(
-	in p_TreeDescription varchar(100),
-    in p_TreeType varchar(20),
-    in p_TreeMaterial varchar(20),
-    in p_Stock int
-)
-begin 
-	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
-end;
-/
+
 create procedure deleteTreeType(
 	in p_TreeID INT
 )
 begin
-    DELETE FROM TreeDescriptionMaster WHERE TreeID.ProductID = p_ProductID;
+    DELETE FROM TreeDescriptionMaster WHERE TreeID = p_TreeID;
 end;
 /
+
 
 
 create trigger adjustStockTreeStockTable after insert 
@@ -351,7 +341,17 @@ begin
     end while;
 end;
 /
+
+create trigger newproductstock after insert
+on treedescriptionmaster
+for each row
+begin 
+call setupTreeStock('2021-11-04', '2025-11-04', new.treeid);
+end;
+/
+
 delimiter ;
+
 
  #Trigger to adjust stock after transaction
 /* create trigger adjustStock after insert on ProductTransactionTable
