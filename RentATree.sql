@@ -221,6 +221,15 @@ begin
 end;
 /
 
+create procedure deleteTreeType(
+	in p_TreeType varchar(20)
+)
+begin
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.Type = p_TreeType);
+    DELETE FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeID = @p_TreeID;
+end;
+/
+
 
 create procedure userTransaction(
 	in p_Username varchar(30),
