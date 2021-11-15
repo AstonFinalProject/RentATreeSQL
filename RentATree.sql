@@ -22,7 +22,7 @@ create table if not exists UserDetailsMaster(
 create table if not exists UserTransactionTable(
 	FinalTransactionID int primary key auto_increment, -- Primary key
     UserID int not null, -- Foreign key from UserDetailsMaster
-    TotalSum int, 
+    TotalSum double, 
     DeliverySlot char(2),
     ReturnSlot char(2),
     constraint fk_userID foreign key (UserID) references UserDetailsMaster (UserID) on delete cascade, -- Sets up foreign key and on delete cascade
@@ -47,7 +47,7 @@ create table if not exists ProductDescription(
     TreeID int not null, -- Foreign key from TreeDescriptionMaster
     SupplierID int not null, -- Foreign key from TreeSupplierMaster
     Height double not null, -- Height in centimeters as specified in the brief
-    Price DOUBLE not null, -- Price in pence right now as this is what was used in the sample code
+    Price double not null, -- Price in pence right now as this is what was used in the sample code
     constraint fk_treeID foreign key (TreeID) references TreeDescriptionMaster (TreeID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_supplierID foreign key (SupplierID) references TreeSupplierMaster (SupplierID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_positiveheight check (Height > 0), -- Constraint to check that height is greater than 0
@@ -60,7 +60,7 @@ create table if not exists ProductTransactionTable(
     FinalTransactionID int not null, -- Foreign key from UserTransactionTable
     LeaseStart date not null,
     LeaseEnd date not null,
-    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID), -- Sets up foreign key
+    constraint fk_productID foreign key (ProductID) references ProductDescription (ProductID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint fk_finalTransactionID foreign key (FinalTransactionID) references UserTransactionTable (FinalTransactionID) on delete cascade, -- Sets up foreign key and on delete cascade
     constraint ck_endAfterStart check (LeaseEnd > LeaseStart) -- Constraint to check LeaseEnd is after LeaseStart
 );
@@ -233,7 +233,7 @@ end;
 
 create procedure userTransaction(
 	in p_Username varchar(30),
-    in p_TotalSum int,
+    in p_TotalSum double,
     out p_finalTransactionID int,
     in p_DeliverySlot char(2),
     in p_ReturnSlot char(2)
@@ -279,11 +279,22 @@ begin
 end;
 /
 
+create procedure newTreeDescriptionMaster(
+	in p_TreeDescription varchar(100),
+    in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_Stock int
+)
+begin 
+	insert into TreeDescriptionMaster(TreeDescription, TreeType, TreeMaterial, Stock) values (p_TreeDescription, p_TreeType, p_TreeMaterial, p_Stock);
+end;
+/
+
 create procedure insertNewProduct(
 	in p_TreeID int,
     in p_SupplierID int,
     in p_Height double,
-    in p_Price DOUBLE
+    in p_Price double
 )
 begin
 	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (p_TreeID, p_SupplierID, p_Height, p_Price);
@@ -334,6 +345,54 @@ END;
 /
 
 
+create procedure incrementHit(
+	in p_Username varchar(30)
+)
+begin
+    UPDATE UserDetailsMaster SET Hit = (Hit+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+create procedure incrementMiss(
+	in p_Username varchar(30)
+)
+begin
+    UPDATE UserDetailsMaster SET Miss = (Miss+1) WHERE UserDetailsMaster.Username = p_Username;
+end;
+/
+
+
+create procedure insertTree(
+	in p_TreeType varchar(20),
+    in p_TreeMaterial varchar(20),
+    in p_SupplierName varchar(30),
+    in p_Height double,
+    in p_Price DOUBLE
+)
+begin
+	SET @p_TreeID = (SELECT TreeID FROM TreeDescriptionMaster WHERE TreeDescriptionMaster.TreeType = p_TreeType AND TreeDescriptionMaster.TreeMaterial = p_TreeMaterial);
+	SET @p_SupplierID = (SELECT SupplierID FROM TreeSupplierMaster WHERE TreeSupplierMaster.SupplierName = p_SupplierName);
+	insert into ProductDescription(TreeID, SupplierID, Height, Price) values (@p_TreeID, @p_SupplierID, p_Height, p_Price);
+end;
+/
+create procedure deleteTree(
+	in p_ProductID INT
+)
+begin
+    DELETE FROM ProductDescription WHERE ProductDescription.ProductID = p_ProductID;
+end;
+/
+
+
+
+create procedure deleteTreeType(
+	in p_TreeID INT
+)
+begin
+    DELETE FROM TreeDescriptionMaster WHERE TreeID = p_TreeID;
+end;
+/
+
+
 
 create trigger adjustStockTreeStockTable after insert 
 on ProductTransactionTable
@@ -349,7 +408,17 @@ begin
     end while;
 end;
 /
+
+create trigger newproductstock after insert
+on treedescriptionmaster
+for each row
+begin 
+call setupTreeStock('2021-11-04', '2025-11-04', new.treeid);
+end;
+/
+
 delimiter ;
+
 
  #Trigger to adjust stock after transaction
 /* create trigger adjustStock after insert on ProductTransactionTable
